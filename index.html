@@ -1,0 +1,650 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Arc — Programmable Money L1</title>
+<meta name="description" content="Arc is an open Layer-1 blockchain purpose-built for programmable money. USDC as native gas, sub-second finality, EVM compatible." />
+<link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><circle cx='32' cy='32' r='28' fill='%2300d1ff'/><path d='M20 38a14 14 0 0 1 24-10' stroke='white' stroke-width='5' fill='none' stroke-linecap='round'/></svg>" />
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: { sans: ['Inter', 'ui-sans-serif', 'system-ui'], display: ['"Space Grotesk"', 'Inter', 'sans-serif'] },
+        colors: {
+          ink: { 950: '#05060a', 900: '#0a0c14', 800: '#0f1220', 700: '#161a2e' },
+          arc:  { 100: '#e8f8ff', 300: '#7be3ff', 400: '#36d2ff', 500: '#00b6ff', 600: '#0091e6' }
+        }
+      }
+    }
+  }
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  html, body { background:#05060a; color:#e6e9f2; }
+  body { font-family: Inter, system-ui, sans-serif; -webkit-font-smoothing:antialiased; }
+  .display { font-family: 'Space Grotesk', Inter, sans-serif; letter-spacing:-0.02em; }
+  .glass { background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.015)); border:1px solid rgba(255,255,255,0.08); backdrop-filter: blur(8px); }
+  .chip { border:1px solid rgba(255,255,255,0.12); background:rgba(255,255,255,0.03); }
+  .link-underline { position:relative; }
+  .link-underline::after { content:""; position:absolute; left:0; right:100%; bottom:-4px; height:1px; background:linear-gradient(90deg,#36d2ff,#a78bfa); transition: right .35s ease; }
+  .link-underline:hover::after { right:0; }
+  .nav-active { color:#fff; }
+  .nav-active::after { right:0 !important; }
+  .gradient-text { background: linear-gradient(90deg,#7be3ff 0%,#a78bfa 50%,#f0abfc 100%); -webkit-background-clip:text; background-clip:text; color:transparent; }
+
+  .hero-stage { position:relative; overflow:hidden; isolation:isolate; }
+  .hero-stage::before, .hero-stage::after { content:""; position:absolute; inset:-1px; pointer-events:none; }
+
+  .v-aurora::before {
+    background:
+      radial-gradient(60% 50% at 20% 30%, rgba(54,210,255,.35), transparent 60%),
+      radial-gradient(50% 40% at 80% 20%, rgba(167,139,250,.35), transparent 60%),
+      radial-gradient(60% 60% at 60% 90%, rgba(244,114,182,.25), transparent 60%);
+    filter: blur(20px); animation: drift 18s ease-in-out infinite alternate;
+  }
+  @keyframes drift { from { transform: translate3d(-2%,-2%,0) scale(1); } to { transform: translate3d(3%,2%,0) scale(1.1); } }
+
+  .v-grid::before {
+    background-image:
+      linear-gradient(rgba(255,255,255,.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.06) 1px, transparent 1px);
+    background-size: 44px 44px;
+    mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, #000 40%, transparent 80%);
+  }
+  .v-grid::after {
+    background: radial-gradient(40% 35% at 50% 45%, rgba(54,210,255,.35), transparent 70%);
+    filter: blur(10px);
+  }
+
+  .v-beams { background: #05060a; }
+  .v-beams::before {
+    background:
+      conic-gradient(from 200deg at 50% 120%, rgba(54,210,255,.35), transparent 25%, rgba(167,139,250,.35) 50%, transparent 75%, rgba(54,210,255,.35));
+    filter: blur(40px); opacity:.7; animation: spin 30s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .v-orbits::before {
+    background: radial-gradient(closest-side, rgba(54,210,255,.18), transparent 70%);
+    inset: -20%;
+  }
+  .v-orbits .orbit { position:absolute; left:50%; top:60%; transform:translate(-50%,-50%); border:1px solid rgba(255,255,255,.08); border-radius:9999px; }
+  .v-orbits .o1 { width:480px; height:480px; }
+  .v-orbits .o2 { width:760px; height:760px; }
+  .v-orbits .o3 { width:1080px; height:1080px; }
+  .v-orbits .dot { position:absolute; left:50%; top:60%; width:10px; height:10px; margin:-5px 0 0 -5px; border-radius:9999px; background:#7be3ff; box-shadow:0 0 24px #36d2ff; animation: orbit 14s linear infinite; }
+  .v-orbits .dot.b { background:#a78bfa; box-shadow:0 0 24px #a78bfa; animation-duration: 22s; animation-direction: reverse; }
+  .v-orbits .dot.c { background:#f0abfc; box-shadow:0 0 24px #f0abfc; animation-duration: 30s; }
+  @keyframes orbit { from { transform: rotate(0) translateX(var(--r)) rotate(0); } to { transform: rotate(360deg) translateX(var(--r)) rotate(-360deg); } }
+
+  .v-mesh::before {
+    background-image: radial-gradient(rgba(255,255,255,.12) 1px, transparent 1px);
+    background-size: 22px 22px;
+    mask-image: radial-gradient(ellipse 80% 70% at 50% 40%, #000 30%, transparent 75%);
+  }
+  .v-mesh::after {
+    background:
+      radial-gradient(40% 40% at 30% 30%, rgba(54,210,255,.30), transparent 60%),
+      radial-gradient(40% 40% at 70% 60%, rgba(244,114,182,.25), transparent 60%);
+    filter: blur(12px);
+  }
+
+  .marquee { mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent); }
+  .marquee-track { animation: slide 30s linear infinite; }
+  @keyframes slide { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+  .reveal { opacity:0; transform: translateY(12px); transition: opacity .6s ease, transform .6s ease; }
+  .reveal.in { opacity:1; transform:none; }
+
+  .panel { display:none; }
+  .panel.active { display:block; animation: fade .4s ease; }
+  @keyframes fade { from { opacity:0; transform: translateY(6px); } to { opacity:1; transform:none; } }
+
+  .card-hover { transition: transform .35s ease, border-color .35s ease, background .35s ease; }
+  .card-hover:hover { transform: translateY(-3px); border-color: rgba(123,227,255,.35); background: rgba(54,210,255,.04); }
+
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-thumb { background: #1a1f33; border-radius: 8px; }
+  ::-webkit-scrollbar-thumb:hover { background: #283054; }
+
+  .pulse-dot { width:8px; height:8px; border-radius:9999px; background:#36d2ff; box-shadow:0 0 0 0 rgba(54,210,255,.6); animation: pulse 1.6s ease-out infinite; }
+  @keyframes pulse { 0%{ box-shadow:0 0 0 0 rgba(54,210,255,.55);} 70%{ box-shadow:0 0 0 14px rgba(54,210,255,0);} 100%{ box-shadow:0 0 0 0 rgba(54,210,255,0);} }
+</style>
+</head>
+<body class="min-h-screen">
+
+<header class="fixed top-0 inset-x-0 z-50">
+  <div class="mx-auto max-w-7xl px-6 py-4">
+    <nav class="glass rounded-2xl px-5 py-3 flex items-center justify-between">
+      <a href="#home" data-tab="home" class="flex items-center gap-2">
+        <span class="inline-block w-7 h-7 rounded-lg bg-gradient-to-br from-arc-400 to-fuchsia-400"></span>
+        <span class="display text-lg">Arc</span>
+        <span class="chip text-[10px] px-2 py-0.5 rounded-full text-arc-300 ml-1">TESTNET</span>
+      </a>
+      <div class="hidden md:flex items-center gap-7 text-sm text-white/70">
+        <a class="link-underline nav-link" data-tab="home" href="#home">Home</a>
+        <a class="link-underline nav-link" data-tab="network" href="#network">Network</a>
+        <a class="link-underline nav-link" data-tab="build" href="#build">Build</a>
+        <a class="link-underline nav-link" data-tab="appkit" href="#appkit">App Kit</a>
+        <a class="link-underline nav-link" data-tab="tools" href="#tools">Tools</a>
+        <a class="link-underline nav-link" data-tab="skills" href="#skills">Skills</a>
+      </div>
+      <div class="flex items-center gap-2">
+        <a href="https://faucet.circle.com" target="_blank" class="hidden sm:inline-flex chip rounded-full px-3 py-1.5 text-xs text-white/80 hover:text-white">Faucet ↗</a>
+        <button id="btn-connect" class="inline-flex items-center gap-2 rounded-full bg-arc-400 text-ink-950 px-4 py-1.5 text-sm font-semibold hover:bg-arc-300 transition">
+          <span id="btn-connect-label">Connect Wallet</span>
+        </button>
+      </div>
+    </nav>
+  </div>
+</header>
+
+<main class="pt-28">
+
+  <section id="panel-home" class="panel active">
+    <div id="hero" class="hero-stage v-aurora min-h-[78vh] flex items-center">
+      <div class="orbit-deco hidden">
+        <div class="orbit o3"></div>
+        <div class="orbit o2"></div>
+        <div class="orbit o1"></div>
+        <div class="dot"   style="--r:240px"></div>
+        <div class="dot b" style="--r:380px"></div>
+        <div class="dot c" style="--r:540px"></div>
+      </div>
+
+      <div class="relative z-10 mx-auto max-w-7xl px-6 py-20 w-full">
+        <div class="flex items-center gap-2 text-xs text-white/70 mb-6 reveal">
+          <span class="pulse-dot"></span>
+          <span id="hero-eyebrow">Layer-1 · Programmable money · Sub-second finality</span>
+        </div>
+
+        <h1 class="display text-5xl md:text-7xl leading-[1.02] reveal">
+          <span id="hero-title-1">The chain where</span><br/>
+          <span class="gradient-text" id="hero-title-2">money is programmable.</span>
+        </h1>
+
+        <p id="hero-sub" class="mt-6 max-w-2xl text-white/70 text-lg reveal">
+          Arc is an open Layer-1 blockchain purpose-built for programmable money. USDC is the native gas token. EVM-compatible, opt-in privacy, deterministic finality.
+        </p>
+
+        <div class="mt-8 flex flex-wrap gap-3 reveal">
+          <a href="#build" data-tab="build" class="rounded-full bg-arc-400 text-ink-950 px-5 py-2.5 font-medium hover:bg-arc-300 transition">Start building</a>
+          <a href="#network" data-tab="network" class="rounded-full chip px-5 py-2.5 hover:border-white/30 transition">Read the docs</a>
+          <button id="reroll" class="rounded-full chip px-5 py-2.5 hover:border-white/30 transition" title="Re-roll hero">↻ Re-roll hero</button>
+        </div>
+
+        <div class="mt-14 grid grid-cols-2 md:grid-cols-4 gap-3 reveal">
+          <div class="glass rounded-xl p-4"><div class="text-xs text-white/50">Gas token</div><div class="display text-xl mt-1">USDC</div></div>
+          <div class="glass rounded-xl p-4"><div class="text-xs text-white/50">Finality</div><div class="display text-xl mt-1">&lt; 1s</div></div>
+          <div class="glass rounded-xl p-4"><div class="text-xs text-white/50">Compatibility</div><div class="display text-xl mt-1">EVM</div></div>
+          <div class="glass rounded-xl p-4"><div class="text-xs text-white/50">Privacy</div><div class="display text-xl mt-1">Opt-in</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="border-y border-white/5 bg-white/[0.02] py-4 marquee">
+      <div class="marquee-track flex gap-12 whitespace-nowrap text-white/50 text-sm">
+        <span>● USDC native gas</span><span>● Sub-second deterministic finality</span><span>● EVM compatible</span><span>● Opt-in privacy</span><span>● Post-quantum roadmap</span><span>● Circle App Kit</span>
+        <span>● USDC native gas</span><span>● Sub-second deterministic finality</span><span>● EVM compatible</span><span>● Opt-in privacy</span><span>● Post-quantum roadmap</span><span>● Circle App Kit</span>
+      </div>
+    </div>
+
+    <div class="mx-auto max-w-7xl px-6 py-20">
+      <div class="flex items-end justify-between mb-10 reveal">
+        <h2 class="display text-3xl md:text-4xl">Built for stable, programmable value.</h2>
+        <a href="#network" data-tab="network" class="hidden md:inline text-sm text-white/60 link-underline">Explore the network →</a>
+      </div>
+      <div class="grid md:grid-cols-3 gap-4">
+        <a href="#network" data-tab="network" class="card-hover glass rounded-2xl p-6 reveal">
+          <div class="text-arc-300 text-sm">01 — Stable fees</div>
+          <div class="display text-xl mt-2">USDC as gas</div>
+          <p class="text-white/60 mt-2 text-sm">Predictable USD-denominated fees. No volatile gas tokens.</p>
+        </a>
+        <a href="#network" data-tab="network" class="card-hover glass rounded-2xl p-6 reveal">
+          <div class="text-arc-300 text-sm">02 — Settlement</div>
+          <div class="display text-xl mt-2">Deterministic finality</div>
+          <p class="text-white/60 mt-2 text-sm">Sub-second, irreversible. Build UX that feels instant.</p>
+        </a>
+        <a href="#network" data-tab="network" class="card-hover glass rounded-2xl p-6 reveal">
+          <div class="text-arc-300 text-sm">03 — Confidentiality</div>
+          <div class="display text-xl mt-2">Opt-in privacy</div>
+          <p class="text-white/60 mt-2 text-sm">Confidential transactions with selective disclosure.</p>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <section id="panel-network" class="panel">
+    <div class="mx-auto max-w-7xl px-6 py-16">
+      <div class="reveal">
+        <div class="text-arc-300 text-sm">Arc Network</div>
+        <h2 class="display text-4xl md:text-5xl mt-2">Architecture &amp; references</h2>
+        <p class="text-white/70 mt-4 max-w-2xl">Consensus + execution architecture, fee model, finality guarantees, privacy primitives, and the network reference docs.</p>
+      </div>
+      <div id="grid-network" class="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mt-10"></div>
+    </div>
+  </section>
+
+  <section id="panel-build" class="panel">
+    <div class="mx-auto max-w-7xl px-6 py-16">
+      <div class="reveal">
+        <div class="text-arc-300 text-sm">Build on Arc</div>
+        <h2 class="display text-4xl md:text-5xl mt-2">Quickstarts, tutorials &amp; SDKs</h2>
+        <p class="text-white/70 mt-4 max-w-2xl">Deploy Solidity contracts with Hardhat, Foundry, Viem, or Ethers. Use Circle Contracts for templates. Pay gas in USDC.</p>
+      </div>
+
+      <div class="glass rounded-2xl p-1.5 mt-10 reveal">
+        <div class="flex items-center gap-1.5 px-3 py-2 text-white/40 text-xs">
+          <span class="w-2.5 h-2.5 rounded-full bg-rose-400/70"></span>
+          <span class="w-2.5 h-2.5 rounded-full bg-amber-300/70"></span>
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-400/70"></span>
+          <span class="ml-3">deploy.ts — viem</span>
+        </div>
+<pre class="rounded-xl bg-ink-900/80 p-5 text-sm overflow-x-auto"><code class="text-white/80">import { createWalletClient, http } from 'viem'
+import { privateKeyToAccount } from 'viem/accounts'
+import { arcTestnet } from './chains'
+
+const account = privateKeyToAccount(process.env.PK)
+const client  = createWalletClient({ account, chain: arcTestnet, transport: http() })
+
+// USDC is the gas token on Arc — fees are paid in USDC, not ETH.
+const hash = await client.deployContract({ abi, bytecode, args: [] })
+console.log('deployed:', hash)
+</code></pre>
+      </div>
+
+      <div id="grid-build" class="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mt-10"></div>
+    </div>
+  </section>
+
+  <section id="panel-appkit" class="panel">
+    <div class="mx-auto max-w-7xl px-6 py-16">
+      <div class="reveal">
+        <div class="text-arc-300 text-sm">App Kit</div>
+        <h2 class="display text-4xl md:text-5xl mt-2">Bridge · Swap · Send · Unified Balance</h2>
+        <p class="text-white/70 mt-4 max-w-2xl">App Kit wraps CCTP and gives your app a single spendable USDC balance across chains. Adapters for Viem, Ethers, Solana, and Circle Wallets.</p>
+      </div>
+
+      <div class="grid lg:grid-cols-5 gap-4 mt-10">
+        <div class="lg:col-span-3 glass rounded-2xl p-6 reveal">
+          <div class="text-sm text-white/60">Unified Balance preview</div>
+          <div class="mt-4 flex items-end justify-between">
+            <div>
+              <div class="text-white/50 text-xs">Spendable</div>
+              <div class="display text-5xl mt-1">$<span id="ub-amt">12,480.55</span></div>
+              <div class="text-white/50 text-xs mt-1">USDC across 4 chains · settles in &lt; 1s</div>
+            </div>
+            <button id="ub-roll" class="chip rounded-full px-4 py-2 text-sm hover:border-white/30">Simulate</button>
+          </div>
+          <div class="mt-6 grid grid-cols-4 gap-2 text-center text-xs">
+            <div class="glass rounded-xl p-3"><div class="text-white/50">Arc</div><div class="display mt-1" id="ch1">5,210.10</div></div>
+            <div class="glass rounded-xl p-3"><div class="text-white/50">Base</div><div class="display mt-1" id="ch2">3,002.40</div></div>
+            <div class="glass rounded-xl p-3"><div class="text-white/50">Ethereum</div><div class="display mt-1" id="ch3">2,118.00</div></div>
+            <div class="glass rounded-xl p-3"><div class="text-white/50">Solana</div><div class="display mt-1" id="ch4">2,150.05</div></div>
+          </div>
+        </div>
+        <div id="grid-appkit" class="lg:col-span-2 grid gap-4"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="panel-tools" class="panel">
+    <div class="mx-auto max-w-7xl px-6 py-16">
+      <div class="reveal">
+        <div class="text-arc-300 text-sm">Tools &amp; Infrastructure</div>
+        <h2 class="display text-4xl md:text-5xl mt-2">Everything to ship on Arc</h2>
+        <p class="text-white/70 mt-4 max-w-2xl">RPC providers, indexers, oracles, account abstraction, compliance, explorer, and faucet.</p>
+      </div>
+      <div id="grid-tools" class="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mt-10"></div>
+    </div>
+  </section>
+
+  <section id="panel-skills" class="panel">
+    <div class="mx-auto max-w-7xl px-6 py-16">
+      <div class="reveal">
+        <div class="text-arc-300 text-sm">Circle Skills</div>
+        <h2 class="display text-4xl md:text-5xl mt-2">Use the skill first</h2>
+        <p class="text-white/70 mt-4 max-w-2xl">Skills are runnable, agent-friendly recipes for building with Circle products. Start with <code class="chip rounded px-1.5 py-0.5 text-xs">use-arc</code>.</p>
+      </div>
+      <div id="grid-skills" class="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mt-10"></div>
+      <p class="text-white/50 text-sm mt-10">Full Circle developer docs: <a class="text-arc-300 link-underline" target="_blank" href="https://developers.circle.com/llms.txt">developers.circle.com/llms.txt</a></p>
+    </div>
+  </section>
+
+  <section id="wallet-panel" class="hidden mx-auto max-w-7xl px-6 mt-6">
+    <div class="glass rounded-2xl p-5 flex flex-wrap items-center gap-4 justify-between">
+      <div class="flex items-center gap-3">
+        <span class="pulse-dot"></span>
+        <div>
+          <div class="text-xs text-white/50">Connected · <span id="w-net">—</span></div>
+          <div class="display text-lg" id="w-addr">0x…</div>
+        </div>
+      </div>
+      <div class="flex items-center gap-3">
+        <div class="text-right">
+          <div class="text-xs text-white/50">Gas balance (USDC)</div>
+          <div class="display text-xl" id="w-bal">—</div>
+        </div>
+        <button id="btn-add-arc" class="chip rounded-full px-3 py-1.5 text-xs hover:border-white/30">Add Arc Testnet</button>
+        <button id="btn-switch-arc" class="chip rounded-full px-3 py-1.5 text-xs hover:border-white/30">Switch to Arc</button>
+        <button id="btn-sign" class="chip rounded-full px-3 py-1.5 text-xs hover:border-white/30">Sign test message</button>
+        <a href="https://faucet.circle.com" target="_blank" class="chip rounded-full px-3 py-1.5 text-xs hover:border-white/30">Faucet ↗</a>
+        <button id="btn-disconnect" class="rounded-full bg-rose-500/20 text-rose-200 border border-rose-400/30 px-3 py-1.5 text-xs hover:bg-rose-500/30">Disconnect</button>
+      </div>
+    </div>
+    <div id="w-msg" class="text-xs text-white/50 mt-2"></div>
+  </section>
+
+  <footer class="border-t border-white/5 mt-10">
+    <div class="mx-auto max-w-7xl px-6 py-10 flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center gap-2 text-white/60 text-sm">
+        <span class="inline-block w-5 h-5 rounded-md bg-gradient-to-br from-arc-400 to-fuchsia-400"></span>
+        <span>Arc — programmable money. Built on Circle.</span>
+      </div>
+      <div class="text-white/40 text-xs">Content adapted from <a class="link-underline text-white/60" target="_blank" href="https://docs.arc.network/llms.txt">docs.arc.network/llms.txt</a></div>
+    </div>
+  </footer>
+</main>
+
+<script>
+  const D = {
+    network: [
+      ['Arc Network Overview', 'Architecture and core developer platform', 'https://docs.arc.network/arc-chain.md'],
+      ['System Overview', 'Consensus + execution layer architecture', 'https://docs.arc.network/arc/concepts/system-overview.md'],
+      ['Stable Fee Design', 'USDC as gas, predictable fees', 'https://docs.arc.network/arc/concepts/stable-fee-design.md'],
+      ['Deterministic Finality', 'Instant, irreversible settlement', 'https://docs.arc.network/arc/concepts/deterministic-finality.md'],
+      ['Opt-in Privacy', 'Confidential transactions with selective disclosure', 'https://docs.arc.network/arc/concepts/opt-in-privacy.md'],
+      ['Post-quantum Security', 'Quantum-resilient security roadmap', 'https://docs.arc.network/arc/concepts/post-quantum-security.md'],
+      ['Connect to Arc', 'RPC endpoints and wallet setup', 'https://docs.arc.network/arc/references/connect-to-arc.md'],
+      ['Contract Addresses', 'USDC, EURC, CCTP, Gateway addresses', 'https://docs.arc.network/arc/references/contract-addresses.md'],
+      ['EVM Compatibility', 'Differences from standard EVM', 'https://docs.arc.network/arc/references/evm-compatibility.md'],
+      ['Gas and Fees', 'Fee model and pricing', 'https://docs.arc.network/arc/references/gas-and-fees.md']
+    ],
+    build: [
+      ['Build Overview', 'Quickstarts, tutorials, and SDKs', 'https://docs.arc.network/build.md'],
+      ['Sample Applications', 'Open source examples', 'https://docs.arc.network/arc/references/sample-applications.md'],
+      ['Deploy on Arc', 'Deploy a Solidity contract on Arc Testnet', 'https://docs.arc.network/arc/tutorials/deploy-on-arc.md'],
+      ['Deploy Contracts (Circle)', 'Deploy templates via Circle Contracts', 'https://docs.arc.network/arc/tutorials/deploy-contracts.md'],
+      ['Interact with Contracts', 'Call contract functions', 'https://docs.arc.network/arc/tutorials/interact-with-contracts.md'],
+      ['Monitor Contract Events', 'Track onchain activity', 'https://docs.arc.network/arc/tutorials/monitor-contract-events.md']
+    ],
+    appkit: [
+      ['App Kit Overview', 'Payment & liquidity workflows across chains', 'https://docs.arc.network/app-kit.md'],
+      ['Install App Kit', 'Core package and adapters', 'https://docs.arc.network/app-kit/tutorials/installation.md'],
+      ['Adapter Setups', 'Viem, Ethers, Solana, Circle Wallets', 'https://docs.arc.network/app-kit/tutorials/adapter-setups.md'],
+      ['Unified Balance', 'Combine USDC across chains into one balance', 'https://docs.arc.network/app-kit/unified-balance.md']
+    ],
+    tools: [
+      ['Node Providers', 'RPC access providers', 'https://docs.arc.network/arc/tools/node-providers.md'],
+      ['Data Indexers', 'APIs and sub-graphs', 'https://docs.arc.network/arc/tools/data-indexers.md'],
+      ['Oracles', 'Price feeds and offchain data', 'https://docs.arc.network/arc/tools/oracles.md'],
+      ['Account Abstraction', 'AA providers and paymasters', 'https://docs.arc.network/arc/tools/account-abstraction.md'],
+      ['Compliance', 'Analytics and screening tools', 'https://docs.arc.network/arc/tools/compliance-vendors.md'],
+      ['Explorer', 'Arc Testnet block explorer', 'https://testnet.arcscan.app'],
+      ['Faucet', 'Testnet token faucet', 'https://faucet.circle.com'],
+      ['Running a Node', 'Node architecture and roles', 'https://docs.arc.network/arc/concepts/running-a-node.md'],
+      ['Run an Arc Node', 'Step-by-step node setup', 'https://docs.arc.network/arc/tutorials/run-an-arc-node.md']
+    ],
+    skills: [
+      ['use-arc', 'Chain config, RPC, deploy, USDC bridging, gas', 'https://github.com/circlefin/skills/blob/master/plugins/circle/skills/use-arc/SKILL.md'],
+      ['use-usdc', 'Build with USDC across chains', 'https://github.com/circlefin/skills/blob/master/plugins/circle/skills/use-usdc/SKILL.md'],
+      ['use-circle-wallets', 'Wallets overview', 'https://github.com/circlefin/skills/blob/master/plugins/circle/skills/use-circle-wallets/SKILL.md'],
+      ['use-developer-controlled-wallets', 'Server-side custody for apps', 'https://github.com/circlefin/skills/blob/master/plugins/circle/skills/use-developer-controlled-wallets/SKILL.md'],
+      ['use-user-controlled-wallets', 'Self-custodial UX with Circle', 'https://github.com/circlefin/skills/blob/master/plugins/circle/skills/use-user-controlled-wallets/SKILL.md'],
+      ['use-modular-wallets', 'Account abstraction wallets', 'https://github.com/circlefin/skills/blob/master/plugins/circle/skills/use-modular-wallets/SKILL.md'],
+      ['use-gateway', 'Gateway / nanopayments', 'https://github.com/circlefin/skills/blob/master/plugins/circle/skills/use-gateway/SKILL.md'],
+      ['use-smart-contract-platform', 'Deploy templates via Circle Contracts', 'https://github.com/circlefin/skills/blob/master/plugins/circle/skills/use-smart-contract-platform/SKILL.md']
+    ]
+  };
+
+  const card = (item) => {
+    const title = item[0], desc = item[1], href = item[2];
+    return '<a href="' + href + '" target="_blank" class="card-hover glass rounded-2xl p-5 reveal block">' +
+      '<div class="flex items-start justify-between gap-4">' +
+        '<div><div class="display text-lg">' + title + '</div>' +
+        '<p class="text-white/60 text-sm mt-1.5">' + desc + '</p></div>' +
+        '<span class="text-white/40">&#8599;</span>' +
+      '</div></a>';
+  };
+
+  const fill = (id, items) => document.getElementById(id).innerHTML = items.map(card).join('');
+  fill('grid-network', D.network);
+  fill('grid-build',   D.build);
+  fill('grid-appkit',  D.appkit);
+  fill('grid-tools',   D.tools);
+  fill('grid-skills',  D.skills);
+
+  const tabs = ['home','network','build','appkit','tools','skills'];
+  function setTab(name, opts) {
+    opts = opts || {};
+    if (tabs.indexOf(name) === -1) name = 'home';
+    tabs.forEach(t => document.getElementById('panel-' + t).classList.toggle('active', t === name));
+    document.querySelectorAll('.nav-link').forEach(a => a.classList.toggle('nav-active', a.dataset.tab === name));
+    if (name === 'home' && opts.rotate !== false) rotateHero();
+    queueMicrotask(observeReveals);
+    window.scrollTo({ top: 0, behavior: opts.smooth === false ? 'auto' : 'smooth' });
+    if (location.hash !== '#' + name) history.replaceState(null, '', '#' + name);
+  }
+
+  document.querySelectorAll('[data-tab]').forEach(el => {
+    el.addEventListener('click', e => { e.preventDefault(); setTab(el.dataset.tab); });
+  });
+
+  const variants = ['v-aurora','v-grid','v-beams','v-orbits','v-mesh'];
+  const copy = [
+    { eyebrow:'Layer-1 · Programmable money · Sub-second finality', t1:'The chain where', t2:'money is programmable.', sub:'Arc is an open Layer-1 blockchain purpose-built for programmable money. USDC is the native gas token. EVM-compatible, opt-in privacy, deterministic finality.' },
+    { eyebrow:'USDC as gas · Predictable fees', t1:'Stable fees,', t2:'priced in dollars.', sub:'Forget volatile gas tokens. Arc uses USDC as the native gas asset, so your fees are denominated in USD — predictable for users and treasuries alike.' },
+    { eyebrow:'Deterministic finality', t1:'Settlement that feels', t2:'instant — and final.', sub:'Sub-second deterministic finality means no waiting on confirmations. Build payment, trading, and settlement UX that feels like Web2.' },
+    { eyebrow:'EVM compatible · Hardhat, Foundry, Viem, Ethers', t1:'Ship Solidity,', t2:'on day one.', sub:'Bring your existing tooling. Deploy contracts with the EVM stack you already know — and pay gas in USDC.' },
+    { eyebrow:'Opt-in privacy · Selective disclosure', t1:'Confidential by choice,', t2:'compliant by design.', sub:'Confidential transactions with selective disclosure: protect business logic without giving up auditability.' }
+  ];
+
+  let heroIdx = -1;
+  function rotateHero() {
+    heroIdx = (heroIdx + 1) % variants.length;
+    const hero = document.getElementById('hero');
+    variants.forEach(v => hero.classList.remove(v));
+    hero.classList.add(variants[heroIdx]);
+    hero.querySelector('.orbit-deco').classList.toggle('hidden', variants[heroIdx] !== 'v-orbits');
+    const c = copy[heroIdx];
+    document.getElementById('hero-eyebrow').textContent = c.eyebrow;
+    document.getElementById('hero-title-1').textContent = c.t1;
+    document.getElementById('hero-title-2').textContent = c.t2;
+    document.getElementById('hero-sub').textContent     = c.sub;
+    hero.querySelectorAll('.reveal').forEach(el => { el.classList.remove('in'); requestAnimationFrame(() => el.classList.add('in')); });
+  }
+
+  document.getElementById('reroll').addEventListener('click', e => { e.preventDefault(); rotateHero(); });
+
+  let io;
+  function observeReveals() {
+    if (io) io.disconnect();
+    io = new IntersectionObserver(entries => {
+      entries.forEach(en => { if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); } });
+    }, { threshold: 0.08 });
+    document.querySelectorAll('.panel.active .reveal').forEach(el => io.observe(el));
+  }
+
+  const fmt = n => n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  document.getElementById('ub-roll').addEventListener('click', () => {
+    const a = 3000 + Math.random()*5000;
+    const b = 1500 + Math.random()*3500;
+    const c = 1000 + Math.random()*3000;
+    const d = 1000 + Math.random()*3500;
+    document.getElementById('ch1').textContent = fmt(a);
+    document.getElementById('ch2').textContent = fmt(b);
+    document.getElementById('ch3').textContent = fmt(c);
+    document.getElementById('ch4').textContent = fmt(d);
+    document.getElementById('ub-amt').textContent = fmt(a+b+c+d);
+  });
+
+  const initial = (location.hash || '#home').slice(1);
+  setTab(initial, { rotate: true, smooth: false });
+  observeReveals();
+
+  window.addEventListener('hashchange', () => {
+    const t = (location.hash || '#home').slice(1);
+    setTab(t);
+  });
+
+  // ---------- Wallet (EIP-1193, Arc Testnet) ----------
+  const ARC = {
+    chainIdHex: '0x4CF7D2', // 5042002
+    chainIdDec: 5042002,
+    chainName: 'Arc Testnet',
+    rpcUrls: ['https://rpc.testnet.arc.network'],
+    nativeCurrency: { name: 'USDC', symbol: 'USDC', decimals: 18 },
+    blockExplorerUrls: ['https://testnet.arcscan.app']
+  };
+
+  const wEl = (id) => document.getElementById(id);
+  const wPanel = wEl('wallet-panel');
+  const wBtn   = wEl('btn-connect');
+  const wLabel = wEl('btn-connect-label');
+  const wAddr  = wEl('w-addr');
+  const wNet   = wEl('w-net');
+  const wBal   = wEl('w-bal');
+  const wMsg   = wEl('w-msg');
+
+  const short = (a) => a ? a.slice(0,6) + '…' + a.slice(-4) : '';
+  const setMsg = (t, isErr) => { wMsg.textContent = t || ''; wMsg.className = 'text-xs mt-2 ' + (isErr ? 'text-rose-300' : 'text-white/50'); };
+
+  function ensureProvider() {
+    if (!window.ethereum) {
+      setMsg('No EVM wallet detected. Install MetaMask, Rabby, Coinbase Wallet, or Rainbow.', true);
+      return null;
+    }
+    return window.ethereum;
+  }
+
+  async function rpc(method, params=[]) {
+    const eth = ensureProvider(); if (!eth) throw new Error('no provider');
+    return eth.request({ method, params });
+  }
+
+  async function refreshBalance(addr) {
+    try {
+      const hex = await rpc('eth_getBalance', [addr, 'latest']);
+      const wei = BigInt(hex);
+      // 18 decimals — show 4 decimals
+      const whole = wei / 10n**18n;
+      const frac  = (wei % 10n**18n) / 10n**14n; // 4 decimals
+      wBal.textContent = whole.toString() + '.' + frac.toString().padStart(4,'0') + ' USDC';
+    } catch (e) { wBal.textContent = '—'; }
+  }
+
+  async function refreshChain() {
+    try {
+      const id = await rpc('eth_chainId');
+      const dec = parseInt(id, 16);
+      wNet.textContent = (dec === ARC.chainIdDec) ? 'Arc Testnet' : ('Chain ' + dec + ' (not Arc)');
+      wNet.className = (dec === ARC.chainIdDec) ? 'text-arc-300' : 'text-amber-300';
+    } catch {}
+  }
+
+  async function addArc() {
+    try {
+      await rpc('wallet_addEthereumChain', [{
+        chainId: ARC.chainIdHex,
+        chainName: ARC.chainName,
+        rpcUrls: ARC.rpcUrls,
+        nativeCurrency: ARC.nativeCurrency,
+        blockExplorerUrls: ARC.blockExplorerUrls
+      }]);
+      setMsg('Arc Testnet added.');
+      await refreshChain();
+    } catch (e) { setMsg(e.message || 'Failed to add network', true); }
+  }
+
+  async function switchArc() {
+    try {
+      await rpc('wallet_switchEthereumChain', [{ chainId: ARC.chainIdHex }]);
+      setMsg('Switched to Arc Testnet.');
+    } catch (e) {
+      if (e && (e.code === 4902 || /Unrecognized chain/i.test(e.message||''))) {
+        return addArc();
+      }
+      setMsg(e.message || 'Switch failed', true);
+    }
+  }
+
+  let connectedAddr = null;
+
+  async function connect() {
+    const eth = ensureProvider(); if (!eth) return;
+    try {
+      wBtn.disabled = true; wLabel.textContent = 'Connecting…';
+      const accs = await rpc('eth_requestAccounts');
+      connectedAddr = accs[0];
+      wAddr.textContent = short(connectedAddr);
+      wPanel.classList.remove('hidden');
+      wLabel.textContent = short(connectedAddr);
+      await refreshChain();
+      // try switching to Arc
+      try { await switchArc(); } catch {}
+      await refreshBalance(connectedAddr);
+      setMsg('Connected. If balance shows 0, request USDC from the faucet.');
+    } catch (e) {
+      setMsg(e.message || 'Connection rejected', true);
+      wLabel.textContent = 'Connect Wallet';
+    } finally {
+      wBtn.disabled = false;
+    }
+  }
+
+  function disconnect() {
+    connectedAddr = null;
+    wPanel.classList.add('hidden');
+    wLabel.textContent = 'Connect Wallet';
+    setMsg('');
+  }
+
+  async function signTest() {
+    if (!connectedAddr) return;
+    try {
+      const msg = 'Hello from Arc Testnet — ' + new Date().toISOString();
+      const sig = await rpc('personal_sign', [msg, connectedAddr]);
+      setMsg('Signed: ' + sig.slice(0, 22) + '…' + sig.slice(-6));
+    } catch (e) { setMsg(e.message || 'Sign failed', true); }
+  }
+
+  wBtn.addEventListener('click', () => connectedAddr ? wPanel.classList.toggle('hidden') : connect());
+  wEl('btn-add-arc').addEventListener('click', addArc);
+  wEl('btn-switch-arc').addEventListener('click', switchArc);
+  wEl('btn-sign').addEventListener('click', signTest);
+  wEl('btn-disconnect').addEventListener('click', disconnect);
+
+  if (window.ethereum) {
+    window.ethereum.on?.('accountsChanged', (accs) => {
+      if (!accs || !accs.length) return disconnect();
+      connectedAddr = accs[0];
+      wAddr.textContent = short(connectedAddr);
+      wLabel.textContent = short(connectedAddr);
+      refreshBalance(connectedAddr);
+    });
+    window.ethereum.on?.('chainChanged', async () => {
+      await refreshChain();
+      if (connectedAddr) refreshBalance(connectedAddr);
+    });
+    // Auto-restore if already authorized
+    rpc('eth_accounts').then(accs => {
+      if (accs && accs.length) {
+        connectedAddr = accs[0];
+        wAddr.textContent = short(connectedAddr);
+        wLabel.textContent = short(connectedAddr);
+        wPanel.classList.remove('hidden');
+        refreshChain();
+        refreshBalance(connectedAddr);
+      }
+    }).catch(()=>{});
+  } else {
+    wBtn.addEventListener('click', () => setMsg('No EVM wallet detected. Install MetaMask/Rabby/Coinbase/Rainbow.', true), { once: true });
+  }
+
+</script>
+</body>
+</html>
